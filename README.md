@@ -26,6 +26,17 @@ Private GitHub repository review snapshot:
 
 ![GitHub repository snapshot](docs/assets/github-repo.png)
 
+Professional Draw.io diagrams:
+
+- [Editable architecture diagram](docs/diagrams/soc-architecture.drawio)
+- [Architecture SVG preview](docs/diagrams/soc-architecture.drawio.svg)
+- [Editable SOC role organigram](docs/diagrams/soc-workflow-organigram.drawio)
+- [SOC role organigram SVG preview](docs/diagrams/soc-workflow-organigram.drawio.svg)
+
+![SOC architecture diagram](docs/diagrams/soc-architecture.drawio.svg)
+
+![SOC role organigram](docs/diagrams/soc-workflow-organigram.drawio.svg)
+
 ```text
 Wazuh agents / syslog / pfSense / Snort
         |

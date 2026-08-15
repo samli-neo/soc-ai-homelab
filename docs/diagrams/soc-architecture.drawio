@@ -1,0 +1,82 @@
+<mxfile host="app.diagrams.net" modified="2026-08-15T13:05:00.000Z" agent="OpenCode" version="24.7.17">
+  <diagram id="soc-architecture" name="SOC Architecture">
+    <mxGraphModel dx="1800" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="AI SOC Automation Homelab - End-to-End Architecture" style="text;html=1;strokeColor=none;fillColor=none;fontSize=28;fontStyle=1;fontColor=#0B1F2A;align=center;verticalAlign=middle" vertex="1" parent="1">
+          <mxGeometry x="300" y="30" width="1000" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="sources" value="&#128225; Telemetry Sources" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;fontColor=#0D47A1;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="60" y="130" width="220" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="wazuh" value="&#128737; Wazuh SIEM/XDR&lt;br&gt;Rules, Decoders, FIM, SCA, Syscollector" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#1B5E20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="360" y="120" width="260" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="intake" value="&#128257; SOC Intake Router&lt;br&gt;triage score + asset context" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#EF6C00;fontColor=#E65100;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="700" y="120" width="230" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="shuffle" value="&#9889; Shuffle SOAR&lt;br&gt;10-node workflow + semantic E2E checks" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;fontColor=#4A148C;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1010" y="120" width="260" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="case" value="&#128193; Case Management&lt;br&gt;TheHive deduper + quality gates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F7FA;strokeColor=#00838F;fontColor=#006064;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="180" y="360" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="intel" value="&#128269; Threat Intelligence&lt;br&gt;MISP events + Cortex analyzers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFDE7;strokeColor=#F9A825;fontColor=#795548;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="360" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="malware" value="&#129302; Malware Analysis&lt;br&gt;CAPEv2 + CAPA + YARA + Ghidra" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#B71C1C;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="820" y="360" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="dfir" value="&#128270; DFIR Collection&lt;br&gt;Velociraptor read-only artifacts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#3949AB;fontColor=#1A237E;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1140" y="360" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="approval" value="&#128100; Human Approval Gate&lt;br&gt;Telegram + durable audit record" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE9E7;strokeColor=#D84315;fontColor=#BF360C;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="530" y="600" width="260" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="executor" value="&#128221; Action Executor&lt;br&gt;audit_only by default" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#455A64;fontColor=#263238;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="870" y="600" width="240" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="dashboard" value="Operator Visibility&lt;br&gt;workflow watchdog + SOC dashboard + reports" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;fontColor=#01579B;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1220" y="600" width="260" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="sandbox" value="Sandbox VMs&lt;br&gt;CAPE + Windows malware sandbox" style="shape=mxgraph.basic.cloud;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#616161;fontColor=#212121;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="820" y="520" width="250" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" value="logs / alerts" edge="1" parent="1" source="sources" target="wazuh" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#1565C0;fontColor=#1565C0">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="level 7+ JSON alerts" edge="1" parent="1" source="wazuh" target="intake" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#2E7D32;fontColor=#2E7D32">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="full workflow" edge="1" parent="1" source="intake" target="shuffle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#EF6C00;fontColor=#EF6C00">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="case + tasks" edge="1" parent="1" source="shuffle" target="case" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#7B1FA2">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1140" y="290"/><mxPoint x="305" y="290"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="enrich" edge="1" parent="1" source="shuffle" target="intel" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#7B1FA2">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1140" y="300"/><mxPoint x="625" y="300"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="hash / sample analysis" edge="1" parent="1" source="shuffle" target="malware" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#7B1FA2">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1140" y="310"/><mxPoint x="945" y="310"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="read-only collect" edge="1" parent="1" source="shuffle" target="dfir" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#7B1FA2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e8" value="detonation target" edge="1" parent="1" source="malware" target="sandbox" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C62828">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" value="high-risk proposal" edge="1" parent="1" source="shuffle" target="approval" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#D84315">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1140" y="560"/><mxPoint x="660" y="560"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="approved audit" edge="1" parent="1" source="approval" target="executor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#455A64">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e11" value="health + metrics" edge="1" parent="1" source="shuffle" target="dashboard" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#0277BD">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1140" y="560"/><mxPoint x="1350" y="560"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

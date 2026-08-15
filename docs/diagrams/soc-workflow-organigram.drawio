@@ -1,0 +1,50 @@
+<mxfile host="app.diagrams.net" modified="2026-08-15T13:05:00.000Z" agent="OpenCode" version="24.7.17">
+  <diagram id="soc-workflow-organigram" name="SOC Workflow Organigram">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="900" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="SOC Automation Roles and Escalation Organigram" style="text;html=1;strokeColor=none;fillColor=none;fontSize=28;fontStyle=1;fontColor=#0B1F2A;align=center;verticalAlign=middle" vertex="1" parent="1">
+          <mxGeometry x="250" y="30" width="1000" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="socmgr" value="&#127919; SOC Manager&lt;br&gt;Intake, routing, severity, ownership" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;fontColor=#0D47A1;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="610" y="110" width="280" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="l1" value="&#128269; L1 Triage&lt;br&gt;MISP + Cortex enrichment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#1B5E20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="160" y="290" width="240" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="l2" value="&#128193; L2 Case Manager&lt;br&gt;TheHive dedupe, tasks, quality gates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F7FA;strokeColor=#00838F;fontColor=#006064;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="460" y="290" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="l3" value="&#128270; L3 DFIR&lt;br&gt;Velociraptor read-only collection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#3949AB;fontColor=#1A237E;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="770" y="290" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="malware" value="&#129302; Malware Analyst&lt;br&gt;CAPEv2, CAPA, YARA, Ghidra" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#B71C1C;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1080" y="290" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="threat" value="Threat Intel&lt;br&gt;IOC correlation, MISP event review" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFDE7;strokeColor=#F9A825;fontColor=#795548;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="270" y="520" width="260" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="ir" value="IR Responder&lt;br&gt;Containment proposal, risk statement" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE9E7;strokeColor=#D84315;fontColor=#BF360C;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="620" y="520" width="260" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="ciso" value="CISO Reporting&lt;br&gt;Executive summary + audit trail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#455A64;fontColor=#263238;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="970" y="520" width="260" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="human" value="&#128100; Human Approver&lt;br&gt;Required for high-risk actions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE4EC;strokeColor=#AD1457;fontColor=#880E4F;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="620" y="700" width="260" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="a1" edge="1" parent="1" source="socmgr" target="l1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1565C0"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a2" edge="1" parent="1" source="socmgr" target="l2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1565C0"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a3" edge="1" parent="1" source="socmgr" target="l3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1565C0"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a4" edge="1" parent="1" source="socmgr" target="malware" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#1565C0"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a5" value="IOC review" edge="1" parent="1" source="l1" target="threat" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#2E7D32"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a6" value="case evidence" edge="1" parent="1" source="l2" target="ir" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#00838F"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a7" value="forensic findings" edge="1" parent="1" source="l3" target="ir" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#3949AB"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a8" value="malware verdict" edge="1" parent="1" source="malware" target="ir" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#C62828"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a9" value="briefing" edge="1" parent="1" source="ir" target="ciso" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#455A64"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="a10" value="approval required" edge="1" parent="1" source="ir" target="human" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#AD1457"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
