@@ -100,6 +100,8 @@ powershell -ExecutionPolicy Bypass -File "scripts\test-wazuh-pfsense-snort.ps1"
 
 ## Development Roadmap
 
+- Detailed professionalization roadmap: [`docs/professionalization-skill-plan.md`](docs/professionalization-skill-plan.md)
+
 - Replace remaining absolute homelab paths with portable profiles.
 - Add CI that runs static syntax checks and unit tests for every Python service.
 - Add architecture diagrams under `docs/soc/`.
