@@ -18,6 +18,14 @@ This is a personal portfolio project built to demonstrate practical SOC engineer
 
 ## Architecture
 
+Portfolio landing page preview:
+
+![AI SOC Automation Homelab portfolio preview](docs/assets/portfolio.png)
+
+Private GitHub repository review snapshot:
+
+![GitHub repository snapshot](docs/assets/github-repo.png)
+
 ```text
 Wazuh agents / syslog / pfSense / Snort
         |
