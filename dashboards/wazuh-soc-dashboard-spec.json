@@ -1,0 +1,84 @@
+{
+  "title": "SOC Operations - Wazuh",
+  "description": "Dashboard specification for Wazuh/OpenSearch SOC monitoring.",
+  "index_patterns": ["wazuh-alerts-*", "wazuh-archives-*"],
+  "filters": {
+    "high_risk": "rule.level >= 9 OR rule.groups: soc_risk_high OR rule.groups: soc_risk_critical",
+    "incident_candidates": "rule.groups: incident_candidate",
+    "threat_intel": "rule.groups: threat_intel OR rule.groups: misp",
+    "pfsense": "agent.name: pfsense OR rule.groups: soc-pfsense",
+    "snort": "rule.groups: soc-pfsense-snort OR decoder.name: soc-pfsense-snort-csv"
+  },
+  "panels": [
+    {
+      "name": "High/Critical Alerts by Level",
+      "type": "data_table",
+      "query": "rule.level >= 9",
+      "buckets": ["rule.level"],
+      "purpose": "Show immediate SOC queue pressure by severity."
+    },
+    {
+      "name": "Critical Alerts by Agent",
+      "type": "data_table",
+      "query": "rule.level >= 12 OR rule.groups: soc_risk_critical",
+      "buckets": ["agent.name", "rule.level"],
+      "purpose": "Show which assets are producing critical alerts."
+    },
+    {
+      "name": "SOC Alert Trend by Severity",
+      "type": "line",
+      "query": "*",
+      "buckets": ["timestamp", "rule.level"],
+      "purpose": "Show alert load and severity trend."
+    },
+    {
+      "name": "High and Critical Risk Alerts",
+      "type": "saved_search",
+      "query": "rule.level >= 9 OR rule.groups: soc_risk_high OR rule.groups: soc_risk_critical",
+      "buckets": ["rule.description", "agent.name", "rule.level"],
+      "purpose": "SOC queue for L1/L2 triage."
+    },
+    {
+      "name": "MITRE ATT&CK Techniques",
+      "type": "terms",
+      "field": "rule.mitre.id",
+      "query": "rule.mitre.id:*",
+      "purpose": "Show technique concentration and coverage."
+    },
+    {
+      "name": "Threat Intel Matches",
+      "type": "saved_search",
+      "query": "rule.groups: threat_intel OR rule.groups: misp",
+      "buckets": ["rule.id", "rule.description", "agent.name"],
+      "purpose": "Show MISP-driven enrichment hits."
+    },
+    {
+      "name": "pfSense Firewall Correlations",
+      "type": "saved_search",
+      "query": "rule.id:100112",
+      "buckets": ["data.srcip", "data.dstport"],
+      "purpose": "Show repeated block detections and noisy network sources."
+    },
+    {
+      "name": "Snort IDS Risk",
+      "type": "saved_search",
+      "query": "rule.groups: soc-pfsense-snort AND rule.level >= 7",
+      "buckets": ["rule.id", "data.srcip"],
+      "purpose": "Show actionable IDS alerts without priority-3 noise."
+    },
+    {
+      "name": "Privileged Authentication",
+      "type": "saved_search",
+      "query": "rule.groups: privileged_logon OR rule.id:(100401 OR 100410 OR 100412 OR 17101)",
+      "buckets": ["agent.name", "rule.description"],
+      "purpose": "Track privileged account activity."
+    },
+    {
+      "name": "Agent Telemetry Freshness",
+      "type": "terms",
+      "field": "agent.name",
+      "query": "agent.id:*",
+      "purpose": "Confirm active log collection by agent."
+    }
+  ]
+}

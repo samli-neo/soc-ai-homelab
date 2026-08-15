@@ -1,0 +1,158 @@
+<group name="soc-custom,">
+  <rule id="100001" level="10">
+    <decoded_as>soc-auth-failure</decoded_as>
+    <description>SOC: Multiple authentication failures detected</description>
+    <mitre><id>T1110</id></mitre>
+    <group>authentication_failure,brute_force,pci_dss_11.2.1,</group>
+  </rule>
+
+  <rule id="100002" level="8">
+    <decoded_as>soc-port-scan</decoded_as>
+    <description>SOC: Port scan activity detected</description>
+    <mitre><id>T1046</id></mitre>
+    <group>recon,port_scan,</group>
+  </rule>
+
+  <rule id="100003" level="15">
+    <decoded_as>soc-malware</decoded_as>
+    <description>SOC: Malware signature detected</description>
+    <mitre><id>T1204</id></mitre>
+    <group>malware,infection,</group>
+  </rule>
+</group>
+
+<group name="ids,snort,pfsense,soc-pfsense-snort,">
+  <rule id="100120" level="3">
+    <decoded_as>soc-pfsense-snort-csv</decoded_as>
+    <description>pfSense Snort IDS alert: $(snort_msg)</description>
+    <group>ids_alert,snort_alert,</group>
+  </rule>
+
+  <rule id="100121" level="10">
+    <if_sid>100120</if_sid>
+    <field name="snort_priority">^1$</field>
+    <description>High-priority pfSense Snort IDS alert: $(snort_msg)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>ids_alert,snort_alert,snort_priority_1,pci_dss_11.4,nist_800_53_SI.4,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <rule id="100122" level="7">
+    <if_sid>100120</if_sid>
+    <field name="snort_priority">^2$</field>
+    <description>Medium-priority pfSense Snort IDS alert: $(snort_msg)</description>
+    <mitre><id>T1046</id></mitre>
+    <group>ids_alert,snort_alert,snort_priority_2,pci_dss_11.4,nist_800_53_SI.4,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <rule id="100124" level="8">
+    <if_sid>100120</if_sid>
+    <field name="snort_msg" type="pcre2">(?i)(scan|nmap|masscan|portscan|recon)</field>
+    <description>Reconnaissance pattern detected by pfSense Snort: $(snort_msg)</description>
+    <mitre><id>T1046</id></mitre>
+    <group>ids_alert,snort_alert,recon,network_service_discovery,soc_risk_medium,</group>
+  </rule>
+
+  <rule id="100123" level="10" frequency="8" timeframe="120" ignore="180">
+    <if_matched_sid>100122</if_matched_sid>
+    <same_source_ip />
+    <description>Multiple medium-priority pfSense Snort IDS alerts from same source.</description>
+    <mitre><id>T1046</id></mitre>
+    <group>ids_alert,snort_alert,multiple_ids_events,pci_dss_11.4,nist_800_53_SI.4,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+
+  <rule id="100125" level="12" frequency="3" timeframe="300" ignore="300">
+    <if_matched_sid>100121</if_matched_sid>
+    <same_source_ip />
+    <description>Repeated high-priority IDS alerts from same source.</description>
+    <mitre><id>T1190</id></mitre>
+    <group>ids_alert,snort_alert,repeated_high_priority,soc_risk_high,incident_candidate,</group>
+  </rule>
+</group>
+
+<group name="pfsense,soc-pfsense,firewall,">
+  <rule id="100110" level="0">
+    <decoded_as>soc-pfsense-filterlog</decoded_as>
+    <description>pfSense firewall event grouped.</description>
+  </rule>
+
+  <rule id="100109" level="1">
+    <if_sid>100110</if_sid>
+    <regex type="pcre2">,block,.*,[0-9]+,192\.168\.</regex>
+    <options>no_log</options>
+    <description>pfSense internal RFC1918 block archived without escalation.</description>
+    <group>firewall_block,pfsense_block,internal_source,review_only,false_positive_reduction,</group>
+  </rule>
+
+  <rule id="100111" level="1">
+    <if_sid>100110</if_sid>
+    <match>,block,</match>
+    <options>no_log</options>
+    <description>pfSense firewall blocked traffic archived.</description>
+    <group>firewall_block,pfsense_block,pci_dss_1.4,gpg13_4.12,hipaa_164.312.a.1,nist_800_53_SC.7,tsc_CC6.7,tsc_CC6.8,</group>
+  </rule>
+
+  <rule id="100113" level="5" frequency="18" timeframe="45" ignore="240">
+    <if_matched_sid>100111</if_matched_sid>
+    <same_source_ip />
+    <regex type="pcre2">,192\.168\.[0-9]+\.[0-9]+,[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+,[0-9]+,[0-9]+$</regex>
+    <description>Repeated pfSense firewall blocks from internal RFC1918 source.</description>
+    <group>multiple_blocks,pfsense_block,internal_source,review_only,false_positive_reduction,</group>
+  </rule>
+
+  <rule id="100114" level="5" frequency="18" timeframe="45" ignore="240">
+    <if_matched_sid>100111</if_matched_sid>
+    <same_source_ip />
+    <regex type="pcre2">,10\.[0-9]+\.[0-9]+\.[0-9]+,[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+,[0-9]+,[0-9]+$</regex>
+    <description>Repeated pfSense firewall blocks from internal RFC1918 source.</description>
+    <group>multiple_blocks,pfsense_block,internal_source,review_only,false_positive_reduction,</group>
+  </rule>
+
+  <rule id="100115" level="5" frequency="18" timeframe="45" ignore="240">
+    <if_matched_sid>100111</if_matched_sid>
+    <same_source_ip />
+    <regex type="pcre2">,172\.(1[6-9]|2[0-9]|3[0-1])\.[0-9]+\.[0-9]+,[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+,[0-9]+,[0-9]+$</regex>
+    <description>Repeated pfSense firewall blocks from internal RFC1918 source.</description>
+    <group>multiple_blocks,pfsense_block,internal_source,review_only,false_positive_reduction,</group>
+  </rule>
+
+  <rule id="100112" level="10" frequency="18" timeframe="45" ignore="240">
+    <if_matched_sid>100111</if_matched_sid>
+    <same_source_ip />
+    <description>Multiple pfSense firewall blocks from same source.</description>
+    <mitre><id>T1110</id></mitre>
+    <group>multiple_blocks,pfsense_block,pci_dss_1.4,pci_dss_10.6.1,gpg13_4.12,hipaa_164.312.a.1,hipaa_164.312.b,nist_800_53_SC.7,nist_800_53_AU.6,tsc_CC6.7,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+  </rule>
+</group>
+
+<group name="soc-noise-reduction,proxmox,syscheck,">
+  <rule id="100520" level="2">
+    <if_sid>550</if_sid>
+    <field name="syscheck.path" type="pcre2">^/etc/pve/(\.vmlist|\.rrd|\.version|local|nodes/[^/]+/lrm_status)$</field>
+    <description>Expected Proxmox cluster state file changed.</description>
+    <group>false_positive_reduction,proxmox_dynamic_state,</group>
+  </rule>
+</group>
+
+<group name="soc-risk,authentication,windows,linux,">
+  <rule id="100401" level="12" frequency="3" timeframe="600" ignore="300">
+    <if_matched_sid>17101</if_matched_sid>
+    <description>Repeated successful logins outside business hours.</description>
+    <mitre><id>T1078</id></mitre>
+    <group>authentication_success,policy_violation,soc_risk_high,incident_candidate,</group>
+  </rule>
+
+  <rule id="100410" level="7">
+    <decoded_as>windows_eventchannel</decoded_as>
+    <field name="win.system.eventID">^4672$</field>
+    <description>Windows special privileges assigned to a new logon.</description>
+    <mitre><id>T1078</id></mitre>
+    <group>windows,windows_security,privileged_logon,soc_risk_medium,</group>
+  </rule>
+
+  <rule id="100412" level="12" frequency="3" timeframe="300" ignore="300">
+    <if_matched_sid>100410</if_matched_sid>
+    <description>Repeated Windows privileged logon events.</description>
+    <mitre><id>T1078</id></mitre>
+    <group>windows,windows_security,privileged_logon,soc_risk_high,incident_candidate,</group>
+  </rule>
+</group>

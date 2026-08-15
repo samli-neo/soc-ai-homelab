@@ -1,0 +1,6 @@
+<group name="soc-decoder-placeholder,">
+  <rule id="100199" level="0">
+    <match>__soc_decoder_placeholder_never_match__</match>
+    <description>SOC decoder placeholder rule for legacy bind-mounted local_decoders.xml</description>
+  </rule>
+</group>

@@ -1,0 +1,13 @@
+[Unit]
+Description=Setup macvlan0 interface for Docker VLAN 50
+After=network.target docker.service
+Requires=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash -c "ip link add macvlan0 link eth0 type macvlan mode bridge; ip addr add 10.10.50.250/32 dev macvlan0; ip link set macvlan0 up; ip route del 10.10.50.0/24 dev eth0 2>/dev/null; ip route add 10.10.50.0/24 dev macvlan0; ip route add 10.10.50.111/32 dev eth0"
+ExecStop=/bin/bash -c "ip route del 10.10.50.0/24 dev macvlan0 2>/dev/null; ip route del 10.10.50.111/32 dev eth0 2>/dev/null; ip link del macvlan0 2>/dev/null"
+
+[Install]
+WantedBy=multi-user.target

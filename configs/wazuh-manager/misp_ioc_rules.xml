@@ -1,0 +1,64 @@
+<group name="soc-threat-intel,misp,">
+  <rule id="100200" level="3">
+    <decoded_as>json</decoded_as>
+    <match>phase4_misp</match>
+    <description>SOC CTI: JSON event eligible for MISP IOC checks</description>
+  </rule>
+
+  <rule id="100201" level="12">
+    <if_sid>100200</if_sid>
+    <list field="srcip" lookup="address_match_key">etc/lists/misp_ip_iocs</list>
+    <description>SOC CTI: Source IP matched MISP indicator</description>
+    <mitre><id>T1595</id></mitre>
+    <group>threat_intel,misp,ip,soc_risk_high,incident_candidate,</group>
+  </rule>
+
+  <rule id="100202" level="12">
+    <if_sid>100200</if_sid>
+    <list field="dstip" lookup="address_match_key">etc/lists/misp_ip_iocs</list>
+    <description>SOC CTI: Destination IP matched MISP indicator</description>
+    <mitre><id>T1105</id></mitre>
+    <group>threat_intel,misp,ip,soc_risk_high,incident_candidate,</group>
+  </rule>
+
+  <rule id="100203" level="10">
+    <if_sid>100200</if_sid>
+    <list field="url" lookup="match_key">etc/lists/misp_domain_iocs</list>
+    <description>SOC CTI: URL/domain matched MISP indicator</description>
+    <mitre><id>T1071</id></mitre>
+    <group>threat_intel,misp,domain,soc_risk_high,incident_candidate,</group>
+  </rule>
+
+  <rule id="100204" level="12">
+    <if_sid>100200</if_sid>
+    <list field="sha256" lookup="match_key">etc/lists/misp_hash_iocs</list>
+    <description>SOC CTI: File hash matched MISP indicator</description>
+    <mitre><id>T1204</id></mitre>
+    <group>threat_intel,misp,hash,malware,soc_risk_critical,incident_candidate,</group>
+  </rule>
+
+  <rule id="100205" level="12">
+    <if_sid>554</if_sid>
+    <list field="syscheck.sha256_after" lookup="match_key">etc/lists/misp_hash_iocs</list>
+    <description>SOC CTI: FIM file SHA256 matched MISP malware indicator</description>
+    <mitre><id>T1204</id></mitre>
+    <group>threat_intel,misp,hash,malware,fim,soc_risk_critical,incident_candidate,</group>
+  </rule>
+
+  <rule id="100206" level="12">
+    <if_sid>550</if_sid>
+    <list field="syscheck.sha256_after" lookup="match_key">etc/lists/misp_hash_iocs</list>
+    <description>SOC CTI: Modified file SHA256 matched MISP malware indicator</description>
+    <mitre><id>T1204</id></mitre>
+    <group>threat_intel,misp,hash,malware,fim,soc_risk_critical,incident_candidate,</group>
+  </rule>
+
+  <rule id="100300" level="12">
+    <if_sid>100200</if_sid>
+    <field name="sha256">^824a9641bcf64f711ba98108ee463075af8047d19e6f72aca761f4e0035fc8c2$</field>
+    <description>SOC CTI: sha256 matched MISP sha256 indicator 824a9641bcf64f711ba98108ee463075af8047d19e6f72aca761f4e0035fc8c2</description>
+    <mitre><id>T1204</id></mitre>
+    <group>threat_intel,misp,direct_ioc,malware,soc_risk_critical,incident_candidate,</group>
+  </rule>
+
+</group>

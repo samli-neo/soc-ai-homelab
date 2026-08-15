@@ -1,0 +1,28 @@
+authc:
+  basic_internal_auth_domain:
+    description: "Authenticate via HTTP Basic against internal users database"
+    http_enabled: true
+    transport_enabled: true
+    order: 0
+    http_authenticator:
+      type: basic
+      challenge: false
+    authentication_backend:
+      type: intern
+  saml_auth_domain:
+    description: "Authenticate via SAML using Keycloak"
+    http_enabled: true
+    transport_enabled: false
+    order: 1
+    http_authenticator:
+      type: saml
+      challenge: true
+      config:
+        idp:
+          metadata_url: http://10.10.50.70/realms/master/protocol/saml/descriptor
+          entity_id: http://10.10.50.70/realms/master
+        sp:
+          entity_id: wazuh
+        exchange_key: ${WAZUH_SAML_EXCHANGE_KEY}
+    authentication_backend:
+      type: noop

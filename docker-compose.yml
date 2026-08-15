@@ -1,0 +1,660 @@
+# ============================================================
+# SOC Homelab - Stack complète Docker
+# LXC: soc-docker (8 vCPU / 16 GB RAM / 120 GB)
+# VLAN 50 - vmbr1
+# ============================================================
+
+networks:
+  soc-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  vlan50:
+    external: true
+    name: vlan50
+
+volumes:
+  # Wazuh
+  wazuh-indexer-data:
+  wazuh-manager-data:
+  wazuh-dashboard-data:
+  # Shuffle
+  shuffle-opensearch-data:
+  # TheHive
+  cassandra-data:
+  thehive-data:
+  thehive-community-files:
+  # MISP
+  misp-db-data:
+  misp-data:
+  misp-certs:
+
+services:
+  # ==================== WAZUH (SIEM + XDR) ====================
+  wazuh-indexer:
+    image: wazuh/wazuh-indexer:4.14.5
+    hostname: wazuh-indexer
+    container_name: wazuh-indexer
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.41
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - wazuh-indexer-data:/var/lib/wazuh-indexer
+      - ./configs/wazuh-indexer/config.yml:/usr/share/wazuh-indexer/config/opensearch-security/config.yml:ro
+    ports:
+      - "9200:9200"
+
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.14.5
+    hostname: wazuh-manager
+    container_name: wazuh-manager
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.40
+    environment:
+      - "INDEXER_URL=https://wazuh-indexer:9200"
+      - "INDEXER_USERNAME=${WAZUH_INDEXER_USERNAME:-admin}"
+      - "INDEXER_PASSWORD=${WAZUH_INDEXER_PASSWORD:?Set WAZUH_INDEXER_PASSWORD in .env}"
+      - "FILEBEAT_SSL_VERIFICATION_MODE=none"
+      - "SSL_CERTIFICATE_VERIFICATION=false"
+    extra_hosts:
+      - "demo.indexer:172.20.0.5"
+    volumes:
+      - wazuh-manager-data:/var/ossec/data
+      - /root/soc-configs/wazuh-manager/ossec.conf:/wazuh-config-mount/etc/ossec.conf
+      - /root/soc-configs/wazuh-manager/agent.conf:/var/ossec/etc/shared/default/agent.conf
+      - /root/soc-configs/wazuh-manager/client.keys:/var/ossec/etc/client.keys
+      - /root/soc-configs/wazuh-manager/rbac.db:/var/ossec/api/configuration/security/rbac.db
+      - /root/soc-configs/wazuh-manager/custom-shuffle.py:/var/ossec/integrations/custom-shuffle
+      - /root/soc-configs/wazuh-manager/local_rules.xml:/var/ossec/etc/rules/local_rules.xml
+      - /root/soc-configs/wazuh-manager/misp_ioc_rules.xml:/var/ossec/etc/rules/misp_ioc_rules.xml
+      - /root/soc-configs/wazuh-manager/local_decoders.xml:/var/ossec/etc/rules/local_decoders.xml
+      - /root/soc-configs/wazuh-manager/soc_decoders.xml:/var/ossec/etc/decoders/soc_decoders.xml
+      - /root/soc-configs/wazuh-manager/misp_ip_iocs:/var/ossec/etc/lists/misp_ip_iocs
+      - /root/soc-configs/wazuh-manager/misp_domain_iocs:/var/ossec/etc/lists/misp_domain_iocs
+      - /root/soc-configs/wazuh-manager/misp_hash_iocs:/var/ossec/etc/lists/misp_hash_iocs
+    ports:
+      - "514:514/udp"
+      - "1514:1514/udp"
+      - "1514:1514"
+      - "1515:1515"
+      - "1516:1516"
+      - "55000:55000"
+    depends_on:
+      - wazuh-indexer
+
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:4.14.5
+    hostname: wazuh-dashboard
+    container_name: wazuh-dashboard
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.42
+    environment:
+      - "INDEXER_URL=https://wazuh-indexer:9200"
+      - "INDEXER_USERNAME=${WAZUH_INDEXER_USERNAME:-admin}"
+      - "INDEXER_PASSWORD=${WAZUH_INDEXER_PASSWORD:?Set WAZUH_INDEXER_PASSWORD in .env}"
+      - "DASHBOARD_USERNAME=${WAZUH_DASHBOARD_USERNAME:-admin}"
+      - "DASHBOARD_PASSWORD=${WAZUH_DASHBOARD_PASSWORD:?Set WAZUH_DASHBOARD_PASSWORD in .env}"
+      - "WAZUH_API_URL=https://wazuh-manager:55000"
+      - "API_USERNAME=wazuh-wui"
+      - "API_PASSWORD=${WAZUH_API_PASS}"
+    volumes:
+      - wazuh-dashboard-data:/usr/share/wazuh-dashboard/data
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        cat > /usr/share/wazuh-dashboard/config/opensearch_dashboards.yml << YML
+        server.host: "0.0.0.0"
+        opensearch.hosts: ["https://wazuh-indexer:9200"]
+        opensearch.username: ${WAZUH_INDEXER_USERNAME:-admin}
+        opensearch.password: ${WAZUH_INDEXER_PASSWORD:?Set WAZUH_INDEXER_PASSWORD in .env}
+        opensearch.ssl.verificationMode: none
+        opensearch.requestHeadersAllowlist: ["securitytenant","Authorization"]
+        opensearch_security.multitenancy.enabled: false
+        opensearch_security.readonly_mode.roles: ["kibana_read_only"]
+        opensearch_security.auth.type: ["basicauth","saml"]
+        opensearch_security.auth.multiple_auth_enabled: true
+        server.xsrf.allowlist: ["/_opendistro/_security/saml/acs", "/_opendistro/_security/saml/logout", "/_opendistro/_security/saml/acs/idpinitiated"]
+        YML
+        exec /entrypoint.sh
+    ports:
+      - "443:5601"
+    depends_on:
+      - wazuh-manager
+
+  # ==================== SHUFFLE (SOAR) ====================
+  shuffle-opensearch:
+    image: opensearchproject/opensearch:2.19.1
+    hostname: shuffle-opensearch
+    container_name: shuffle-opensearch
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.12
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.type=single-node"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true"
+      - "network.host=0.0.0.0"
+    volumes:
+      - shuffle-opensearch-data:/usr/share/opensearch/data
+    ports:
+      - "9201:9200"
+
+  shuffle-backend:
+    image: ghcr.io/shuffle/shuffle-backend:latest
+    hostname: shuffle-backend
+    container_name: shuffle-backend
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.11
+    environment:
+      - "SHUFFLE_OPENSEARCH_URL=http://shuffle-opensearch:9200"
+      - "SHUFFLE_ELASTIC=true"
+      - "SHUFFLE_OPENSEARCH_SKIPSSL_VERIFY=true"
+      - "SHUFFLE_OPENSEARCH_USERNAME=${SHUFFLE_OPENSEARCH_USERNAME:-admin}"
+      - "SHUFFLE_OPENSEARCH_PASSWORD=${SHUFFLE_OPENSEARCH_PASSWORD:?Set SHUFFLE_OPENSEARCH_PASSWORD in .env}"
+      - "SHUFFLE_FILE_LOCATION=/app/shuffle-files"
+      - "OUTER_HOSTNAME=10.10.50.10"
+      - "SHUFFLE_DEFAULT_USERNAME=${SHUFFLE_DEFAULT_USERNAME:?Set SHUFFLE_DEFAULT_USERNAME in .env}"
+      - "SHUFFLE_DEFAULT_PASSWORD=${SHUFFLE_DEFAULT_PASSWORD:?Set SHUFFLE_DEFAULT_PASSWORD in .env}"
+      - "SHUFFLE_DEFAULT_APIKEY=${SHUFFLE_DEFAULT_APIKEY:?Set SHUFFLE_DEFAULT_APIKEY in .env}"
+    ports:
+      - "5001:5001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - shuffle-opensearch
+
+  shuffle-frontend:
+    image: ghcr.io/shuffle/shuffle-frontend:latest
+    hostname: shuffle-frontend
+    container_name: shuffle-frontend
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.10
+    environment:
+      - "REACT_APP_API_URL=http://shuffle-backend:5001"
+      - "REACT_APP_DEFAULT_USERNAME=${SHUFFLE_DEFAULT_USERNAME:?Set SHUFFLE_DEFAULT_USERNAME in .env}"
+      - "REACT_APP_DEFAULT_PASSWORD=${SHUFFLE_DEFAULT_PASSWORD:?Set SHUFFLE_DEFAULT_PASSWORD in .env}"
+    volumes:
+      - ./shuffle-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "3001:80"
+      - "3443:443"
+    depends_on:
+      - shuffle-backend
+
+  shuffle-orborus:
+    image: ghcr.io/shuffle/shuffle-orborus:latest
+    hostname: shuffle-orborus
+    container_name: shuffle-orborus
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.13
+    environment:
+      - "SHUFFLE_OPENSEARCH_URL=http://shuffle-opensearch:9200"
+      - "SHUFFLE_ELASTIC=true"
+      - "SHUFFLE_OPENSEARCH_SKIPSSL_VERIFY=true"
+      - "SHUFFLE_OPENSEARCH_USERNAME=${SHUFFLE_OPENSEARCH_USERNAME:-admin}"
+      - "SHUFFLE_OPENSEARCH_PASSWORD=${SHUFFLE_OPENSEARCH_PASSWORD:?Set SHUFFLE_OPENSEARCH_PASSWORD in .env}"
+      - "BASE_URL=http://shuffle-backend:5001"
+      - "ORG_ID=Shuffle"
+      - "ENVIRONMENT_NAME=Shuffle"
+      - "DOCKER_API_VERSION=1.40"
+      - "SHUFFLE_BASE_IMAGE_NAME=frikky/shuffle"
+      - "SHUFFLE_WORKER_VERSION=latest"
+      - "SHUFFLE_ORBORUS_UUID=11111111-1111-1111-1111-111111111111"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - shuffle-backend
+
+  soc-intake-router:
+    image: python:3.13-alpine
+    hostname: soc-intake-router
+    container_name: soc-intake-router
+    restart: unless-stopped
+    networks:
+      - soc-net
+    env_file:
+      - path: /root/soc-intake-router/env
+        required: false
+    volumes:
+      - ./services/soc-intake-router/app.py:/app/app.py:ro
+    command:
+      - python
+      - /app/app.py
+    depends_on:
+      - shuffle-backend
+
+  soc-report-mailer:
+    image: python:3.13-alpine
+    hostname: soc-report-mailer
+    container_name: soc-report-mailer
+    restart: unless-stopped
+    networks:
+      - soc-net
+    env_file:
+      - path: /root/soc-report-mailer/env
+        required: false
+    volumes:
+      - /root/soc-report-mailer/app.py:/app/app.py:ro
+      - /root/soc-report-mailer/data:/data
+    command:
+      - python
+      - /app/app.py
+
+  soc-thehive-deduper:
+    image: python:3.13-alpine
+    hostname: soc-thehive-deduper
+    container_name: soc-thehive-deduper
+    restart: unless-stopped
+    networks:
+      - soc-net
+    env_file:
+      - path: /root/soc-thehive-deduper/env
+        required: false
+    volumes:
+      - /root/soc-thehive-deduper/app.py:/app/app.py:ro
+      - /root/soc-thehive-deduper/data:/data
+    working_dir: /app
+    command:
+      - python
+      - /app/app.py
+    depends_on:
+      - thehive
+
+  soc-workflow-watchdog:
+    image: python:3.13-alpine
+    hostname: soc-workflow-watchdog
+    container_name: soc-workflow-watchdog
+    restart: unless-stopped
+    networks:
+      - soc-net
+    env_file:
+      - path: /root/soc-intake-router/env
+        required: false
+    environment:
+      WATCHDOG_EXECUTION_LIMIT: "100"
+      WATCHDOG_STUCK_AFTER_SECONDS: "900"
+      WATCHDOG_EXPECTED_ACTION_COUNT: "10"
+    volumes:
+      - ./services/soc-workflow-watchdog/app.py:/app/app.py:ro
+    command:
+      - python
+      - /app/app.py
+    depends_on:
+      - shuffle-backend
+
+  # ==================== THEHIVE (Case Management) ====================
+  cassandra:
+    image: cassandra:4.1
+    hostname: cassandra
+    container_name: cassandra
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.51
+    environment:
+      - "CASSANDRA_CLUSTER_NAME=thehive"
+      - "CASSANDRA_DC=datacenter1"
+      - "CASSANDRA_RACK=rack1"
+      - "JVM_OPTS=-Xms512m -Xmx512m"
+      - "MAX_HEAP_SIZE=512M"
+      - "HEAP_NEWSIZE=128M"
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    ports:
+      - "9042:9042"
+
+  thehive-es:
+    image: elasticsearch:7.17.28
+    hostname: thehive-es
+    container_name: thehive-es
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.21
+    environment:
+      - "discovery.type=single-node"
+      - "xpack.security.enabled=false"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - thehive-data:/usr/share/elasticsearch/data
+    ports:
+      - "9202:9200"
+
+  thehive:
+    # Free/community TheHive image. The live proxy points at this container.
+    image: thehiveproject/thehive:latest
+    hostname: thehive-community
+    container_name: thehive-community
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.26
+    environment:
+      - "JAVA_OPTS=-Xms512m -Xmx1024m"
+    volumes:
+      - ./configs/thehive/application.conf:/etc/thehive/application.conf:ro
+      - thehive-community-files:/opt/thp/thehive/files
+    ports:
+      - "9000:9000"
+    command:
+      - --no-config
+    depends_on:
+      - cassandra
+      - thehive-es
+      - cortex
+
+  cortex:
+    build:
+      context: ./docker/cortex
+    image: soc-cortex-analyzers:latest
+    hostname: cortex
+    container_name: cortex
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.22
+    environment:
+      - "JAVA_OPTS=-Xms256m -Xmx512m"
+    volumes:
+      - ./configs/cortex/application.conf:/etc/cortex/application.conf
+      - /root/cortex-analyzers:/opt/Cortex-Analyzers:ro
+      - /root/misp-warninglists:/opt/misp-warninglists:ro
+      - /root/cortex-jobs:/tmp/cortex-jobs
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "9001:9001"
+    depends_on:
+      - thehive-es
+    command:
+      - --es-uri
+      - http://thehive-es:9200
+      - --job-directory
+      - /tmp/cortex-jobs
+      - --docker-job-directory
+      - /root/cortex-jobs
+      - --analyzer-url
+      - /opt/Cortex-Analyzers/analyzers
+      - --responder-url
+      - /opt/Cortex-Analyzers/responders
+
+  soc-cortex-runner:
+    image: python:3.13-alpine
+    hostname: soc-cortex-runner
+    container_name: soc-cortex-runner
+    restart: unless-stopped
+    networks:
+      - soc-net
+    env_file:
+      - path: /root/soc-cortex-runner/env
+        required: false
+    volumes:
+      - ./services/soc-cortex-runner/app.py:/app/app.py:ro
+    command:
+      - python
+      - /app/app.py
+    depends_on:
+      - cortex
+
+  soc-ir-ai-advisor:
+    image: python:3.13-alpine
+    hostname: soc-ir-ai-advisor
+    container_name: soc-ir-ai-advisor
+    restart: unless-stopped
+    networks:
+      - soc-net
+    env_file:
+      - path: /root/soc-ir-ai-advisor/env
+        required: false
+    volumes:
+      - ./services/soc-ir-ai-advisor/app.py:/app/app.py:ro
+    command:
+      - python
+      - /app/app.py
+
+  soc-approval-gateway:
+    image: python:3.13-alpine
+    hostname: soc-approval-gateway
+    container_name: soc-approval-gateway
+    restart: unless-stopped
+    networks:
+      - soc-net
+    env_file:
+      - path: /root/soc-approval-gateway/env
+        required: false
+    volumes:
+      - ./services/soc-approval-gateway/app.py:/app/app.py:ro
+      - /root/soc-approval-gateway/data:/data
+    command:
+      - python
+      - /app/app.py
+
+  soc-action-executor:
+    image: python:3.13-alpine
+    hostname: soc-action-executor
+    container_name: soc-action-executor
+    restart: unless-stopped
+    networks:
+      - soc-net
+    environment:
+      ACTION_EXECUTOR_MODE: "audit_only"
+      ACTION_EXECUTOR_DATA_DIR: "/data"
+    volumes:
+      - ./services/soc-action-executor/app.py:/app/app.py:ro
+      - /root/soc-action-executor/data:/data
+    command:
+      - python
+      - /app/app.py
+
+  soc-ops-dashboard:
+    image: python:3.13-alpine
+    hostname: soc-ops-dashboard
+    container_name: soc-ops-dashboard
+    restart: unless-stopped
+    networks:
+      - soc-net
+    volumes:
+      - ./services/soc-ops-dashboard/app.py:/app/app.py:ro
+    command:
+      - python
+      - /app/app.py
+
+  soc-capev2-runner:
+    image: python:3.13-alpine
+    hostname: soc-capev2-runner
+    container_name: soc-capev2-runner
+    restart: unless-stopped
+    networks:
+      - soc-net
+    env_file:
+      - path: /root/soc-capev2-runner/env
+        required: false
+    volumes:
+      - ./services/soc-capev2-runner/app.py:/app/app.py:ro
+      - /root/soc-ghidra-runner/samples:/samples:ro
+    command:
+      - python
+      - /app/app.py
+
+  soc-ghidra-runner:
+    build:
+      context: ./services/soc-ghidra-runner
+    hostname: soc-ghidra-runner
+    container_name: soc-ghidra-runner
+    restart: unless-stopped
+    networks:
+      - soc-net
+    ports:
+      - "18080:8080"
+    env_file:
+      - path: /root/soc-ghidra-runner/env
+        required: false
+    volumes:
+      - /root/soc-ghidra-runner/samples:/samples
+      - /root/soc-ghidra-runner/work:/work
+      - ./services/soc-ghidra-runner/app.py:/app/app.py:ro
+      - ./services/soc-ghidra-runner/rules:/rules:ro
+    command:
+      - python3
+      - /app/app.py
+
+  soc-malware-pipeline-runner:
+    image: python:3.13-alpine
+    hostname: soc-malware-pipeline-runner
+    container_name: soc-malware-pipeline-runner
+    restart: unless-stopped
+    networks:
+      - soc-net
+    environment:
+      CAPE_RUNNER_URL: http://soc-capev2-runner:8080
+      STATIC_RUNNER_URL: http://soc-ghidra-runner:8080
+      GHIDRA_ESCALATION_SCORE: "70"
+      MALWARE_PIPELINE_ARTIFACTS_DIR: /artifacts
+    volumes:
+      - ./services/soc-malware-pipeline-runner/app.py:/app/app.py:ro
+      - /root/soc-malware-pipeline-runner/artifacts:/artifacts
+    command:
+      - python
+      - /app/app.py
+    depends_on:
+      - soc-capev2-runner
+      - soc-ghidra-runner
+
+  soc-velociraptor-runner:
+    image: docker:27-cli
+    hostname: soc-velociraptor-runner
+    container_name: soc-velociraptor-runner
+    restart: unless-stopped
+    networks:
+      - soc-net
+    env_file:
+      - path: /root/soc-velociraptor-runner/env
+        required: false
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./services/soc-velociraptor-runner/app.py:/app/app.py:ro
+    command:
+      - sh
+      - -c
+      - apk add --no-cache python3 >/dev/null && python3 /app/app.py
+
+  # ==================== MISP (Threat Intelligence) ====================
+  misp-db:
+    image: mysql:8.0
+    hostname: misp-db
+    container_name: misp-db
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.31
+    environment:
+      - "MYSQL_ROOT_PASSWORD=${MISP_MYSQL_ROOT_PASSWORD:?Set MISP_MYSQL_ROOT_PASSWORD in .env}"
+      - "MYSQL_DATABASE=misp"
+      - "MYSQL_USER=misp"
+      - "MYSQL_PASSWORD=${MISP_MYSQL_PASSWORD:?Set MISP_MYSQL_PASSWORD in .env}"
+    volumes:
+      - misp-db-data:/var/lib/mysql
+    command:
+      - "--innodb_buffer_pool_size=256M"
+      - "--innodb_log_file_size=64M"
+      - "--max_allowed_packet=64M"
+
+  misp-redis:
+    image: redis:7-alpine
+    hostname: misp-redis
+    container_name: misp-redis
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.32
+
+  misp-modules:
+    image: coolacid/misp-docker:modules-latest
+    hostname: misp-modules
+    container_name: misp-modules
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.33
+
+  misp:
+    image: coolacid/misp-docker:core-latest
+    hostname: misp
+    container_name: misp
+    restart: unless-stopped
+    networks:
+      soc-net:
+      vlan50:
+        ipv4_address: 10.10.50.30
+    environment:
+      - "INIT=true"
+      - "MYSQL_HOST=misp-db"
+      - "MYSQL_DATABASE=misp"
+      - "MYSQL_USER=misp"
+      - "MYSQL_PASSWORD=${MISP_MYSQL_PASSWORD:?Set MISP_MYSQL_PASSWORD in .env}"
+      - "MYSQL_ROOT_PASSWORD=${MISP_MYSQL_ROOT_PASSWORD:?Set MISP_MYSQL_ROOT_PASSWORD in .env}"
+      - "REDIS_FQDN=misp-redis"
+      - "MISP_MODULES_FQDN=http://misp-modules:6666"
+      - "CRON_USER_ID=1"
+      - "MISP_ADMIN_EMAIL=soc@misp.local"
+      - "MISP_ADMIN_PASSPHRASE=${MISP_ADMIN_PASSPHRASE:?Set MISP_ADMIN_PASSPHRASE in .env}"
+      - "MISP_BASEURL=https://misp"
+      - "BASEURL=https://misp"
+    volumes:
+      - misp-data:/var/www/MISP/app/files
+      - misp-certs:/etc/nginx/certs
+    ports:
+      - "8443:443"
+      - "8080:80"
+    depends_on:
+      - misp-db
+      - misp-redis
+      - misp-modules
+
+  soc-misp-runner:
+    image: python:3.13-alpine
+    hostname: soc-misp-runner
+    container_name: soc-misp-runner
+    restart: unless-stopped
+    networks:
+      - soc-net
+    env_file:
+      - path: /root/soc-misp-runner/env
+        required: false
+    volumes:
+      - ./services/soc-misp-runner/app.py:/app/app.py:ro
+    command:
+      - python
+      - /app/app.py
+    depends_on:
+      - misp

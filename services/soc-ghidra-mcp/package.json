@@ -1,0 +1,13 @@
+{
+  "name": "soc-ghidra-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "zod": "^3.25.76"
+  },
+  "bin": {
+    "soc-ghidra-mcp": "./server.js"
+  }
+}

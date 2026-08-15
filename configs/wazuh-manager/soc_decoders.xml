@@ -1,0 +1,38 @@
+<decoder name="soc-auth-failure">
+  <prematch>^Authentication failed|^Failed password|^Invalid user</prematch>
+  <regex>^(\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+)</regex>
+  <order>timestamp, hostname, process, pid, message, srcip, service, user, protocol</order>
+</decoder>
+
+<decoder name="soc-port-scan">
+  <prematch>^Port scan|^SCAN</prematch>
+  <regex>^(\S+) (\S+) (\S+) (\S+) (\S+)</regex>
+  <order>timestamp, hostname, process, srcip, dstport</order>
+</decoder>
+
+<decoder name="soc-malware">
+  <prematch>^Malware|^Virus|^Trojan|^Ransomware</prematch>
+  <regex>^(\S+) (\S+) (\S+) (\S+)</regex>
+  <order>timestamp, hostname, process, message</order>
+</decoder>
+
+<!-- pfSense remote syslog compatibility.
+     pfSense can emit filterlog as "filterlog[pid]: ..." without a hostname,
+     which prevents Wazuh's built-in pf decoder from seeing program_name=filterlog. -->
+<decoder name="soc-pfsense-filterlog">
+  <prematch>filterlog</prematch>
+</decoder>
+
+<decoder name="soc-pfsense-filterlog-fields">
+  <parent>soc-pfsense-filterlog</parent>
+  <regex type="pcre2">filterlog\[\d+\]: ([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)</regex>
+  <order>id,subrule,anchor,tracker,interface,reason,action,direction,ipversion,tos,ecn,ttl,ipid,offset,flags,protocol_id,protocol,length,srcip,dstip,srcport,dstport</order>
+</decoder>
+
+<!-- pfSense Snort package writes alert_csv lines under /var/log/snort/*/alert.
+     Built-in Wazuh Snort decoders expect fast-alert text, so decode pfSense CSV explicitly. -->
+<decoder name="soc-pfsense-snort-csv">
+  <prematch type="pcre2">^\d\d/\d\d/\d\d-\d\d:\d\d:\d\d\.\d+\s*,\d+,\d+,\d+,"</prematch>
+  <regex type="pcre2">^(\d\d/\d\d/\d\d-\d\d:\d\d:\d\d\.\d+)\s*,(\d+),(\d+),(\d+),"([^"]+)",([A-Z0-9]+),([^,]+),([^,]*),([^,]+),([^,]*),([^,]*),([^,]*),(\d+),([^,]*),([^,]*)$</regex>
+  <order>timestamp,snort_gid,snort_sid,snort_rev,snort_msg,protocol,srcip,srcport,dstip,dstport,snort_packet_id,snort_classification,snort_priority,snort_action,snort_disposition</order>
+</decoder>

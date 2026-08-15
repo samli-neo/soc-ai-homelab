@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI SOC Automation Homelab</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #061017;
+      --panel: #0c1d29;
+      --panel-2: #102b3b;
+      --text: #e8f4ff;
+      --muted: #9db4c5;
+      --cyan: #44d9ff;
+      --green: #64f0a5;
+      --orange: #ffb86b;
+      --border: rgba(255, 255, 255, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 20% 10%, rgba(68, 217, 255, 0.18), transparent 32%), var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 56px 24px 72px; }
+    .hero { display: grid; gap: 28px; grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr); align-items: center; }
+    h1 { margin: 0; font-size: clamp(2.6rem, 7vw, 5.4rem); line-height: 0.94; letter-spacing: -0.06em; }
+    h2 { margin: 0 0 14px; font-size: 1.35rem; }
+    p { color: var(--muted); margin: 0; }
+    .eyebrow { color: var(--green); text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.78rem; font-weight: 800; margin-bottom: 16px; }
+    .lede { font-size: 1.18rem; max-width: 720px; margin-top: 24px; }
+    .card { background: linear-gradient(145deg, rgba(16, 43, 59, 0.94), rgba(12, 29, 41, 0.88)); border: 1px solid var(--border); border-radius: 28px; padding: 24px; box-shadow: 0 20px 80px rgba(0, 0, 0, 0.35); }
+    .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; }
+    .metric { padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 18px; border: 1px solid var(--border); }
+    .metric strong { display: block; color: var(--cyan); font-size: 1.65rem; }
+    .metric span { color: var(--muted); font-size: 0.82rem; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 32px; }
+    .stack { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .pill { border: 1px solid var(--border); background: rgba(255, 255, 255, 0.06); color: var(--text); border-radius: 999px; padding: 8px 12px; font-size: 0.85rem; }
+    .flow { margin-top: 34px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+    .node { padding: 14px 12px; text-align: center; border-radius: 16px; background: rgba(68, 217, 255, 0.1); border: 1px solid rgba(68, 217, 255, 0.22); color: var(--text); font-size: 0.86rem; font-weight: 700; }
+    .node.warn { background: rgba(255, 184, 107, 0.11); border-color: rgba(255, 184, 107, 0.28); }
+    .section { margin-top: 28px; }
+    ul { margin: 12px 0 0; padding-left: 18px; color: var(--muted); }
+    li { margin: 8px 0; }
+    @media (max-width: 860px) {
+      main { padding-top: 32px; }
+      .hero, .grid { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Personal cybersecurity engineering project</div>
+        <h1>AI SOC Automation Homelab</h1>
+        <p class="lede">A production-style SOC lab connecting Wazuh, Shuffle, TheHive, Cortex, MISP, CAPEv2, Ghidra, CAPA, YARA, Velociraptor, and human approval gates into one evidence-first incident workflow.</p>
+        <div class="stack">
+          <span class="pill">Detection Engineering</span>
+          <span class="pill">SOAR</span>
+          <span class="pill">Threat Intel</span>
+          <span class="pill">Malware Analysis</span>
+          <span class="pill">DFIR</span>
+          <span class="pill">Human-in-the-loop IR</span>
+        </div>
+      </div>
+      <aside class="card">
+        <h2>Validated Capabilities</h2>
+        <p>Built as a hands-on portfolio to show practical security automation, safe response design, and distributed troubleshooting.</p>
+        <div class="metrics">
+          <div class="metric"><strong>10</strong><span>SOAR workflow nodes validated semantically</span></div>
+          <div class="metric"><strong>15+</strong><span>internal automation services and runners</span></div>
+          <div class="metric"><strong>7</strong><span>major security platforms integrated</span></div>
+          <div class="metric"><strong>0</strong><span>high-risk actions auto-executed by default</span></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="flow">
+      <div class="node">Wazuh</div>
+      <div class="node">Intake Router</div>
+      <div class="node">Shuffle</div>
+      <div class="node">TheHive</div>
+      <div class="node">MISP/Cortex</div>
+      <div class="node warn">Approval Gate</div>
+    </section>
+
+    <section class="grid">
+      <div class="card section">
+        <h2>Detection</h2>
+        <p>Custom Wazuh rules, decoders, Syscollector, SCA, FIM, Windows Defender logs, pfSense/Snort parsing, and MISP CDB IOC correlation.</p>
+      </div>
+      <div class="card section">
+        <h2>Investigation</h2>
+        <p>TheHive case deduplication, case quality gates, MISP event writing, Cortex analyzer execution, and semantic workflow watchdogs.</p>
+      </div>
+      <div class="card section">
+        <h2>Malware + DFIR</h2>
+        <p>CAPEv2 sandbox orchestration, CAPA/YARA/Ghidra static triage, degraded detonation handling, and Velociraptor read-only collection.</p>
+      </div>
+    </section>
+
+    <section class="card section">
+      <h2>Why This Matters</h2>
+      <ul>
+        <li>Shows practical SOC automation instead of isolated scripts.</li>
+        <li>Uses validation gates to catch hidden workflow failures.</li>
+        <li>Separates low-risk enrichment from high-risk response actions.</li>
+        <li>Documents failures, recovery steps, and engineering tradeoffs for future development.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
