@@ -17,7 +17,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate Docker Compose config
-        run: docker compose --env-file .env.example config --quiet
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          compose = Path('docker-compose.yml').read_text(encoding='utf-8')
+          compose = re.sub(r'path: /root/[^\r\n]+', 'path: .ci-empty-env', compose)
+          Path('.ci-empty-env').write_text('', encoding='utf-8')
+          Path('.ci-docker-compose.yml').write_text(compose, encoding='utf-8')
+          PY
+          docker compose -f .ci-docker-compose.yml --env-file .env.example config --quiet
 
       - name: Compile Python services
         run: |
