@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose config
+        run: docker compose --env-file .env.example config --quiet
+
+      - name: Compile Python services
+        run: |
+          python - <<'PY'
+          import py_compile
+          from pathlib import Path
+
+          for path in sorted(Path('services').glob('**/*.py')):
+              py_compile.compile(str(path), doraise=True)
+          PY
+
+      - name: Parse XML and Draw.io files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          fragment_files = [
+              Path('configs/wazuh-manager/agent.conf'),
+              Path('configs/wazuh-manager/local_rules.xml'),
+              Path('configs/wazuh-manager/misp_ioc_rules.xml'),
+              Path('configs/wazuh-manager/local_decoders.xml'),
+              Path('configs/wazuh-manager/soc_decoders.xml'),
+          ]
+          for path in fragment_files:
+              ET.fromstring(f'<root>{path.read_text(encoding="utf-8")}</root>')
+
+          for path in sorted(Path('docs/diagrams').glob('*.drawio')):
+              ET.parse(path)
+          PY
+
+      - name: High-risk literal secret scan
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          patterns = [
+              re.compile(r'gho_[A-Za-z0-9_]+'),
+              re.compile(r'github_pat_[A-Za-z0-9_]+'),
+              re.compile(r'PROXMOX_' + r'TOKEN_VALUE\s*=\s*[\'\"][^\'\"]+'),
+              re.compile(r'client' + r'Secret\s*=\s*[\'\"][^\'\"]+'),
+              re.compile(r'play\.http\.secret\.key' + r'\s*=\s*[\'\"][^\'\"]+'),
+              re.compile(r'exchange_' + r'key:\s*[^$\s][^\r\n]*'),
+              re.compile(r'PASSWORD\s*=\s*(admin|misp-password|misp-root-password)', re.I),
+              re.compile(r'APIKEY\s*=\s*shuffle-api-key-change-me', re.I),
+          ]
+          skip_parts = {'.git', 'node_modules', '__pycache__', '.venv', 'wazuh-test-evidence', 'samples'}
+          hits = []
+          for path in Path('.').rglob('*'):
+              if not path.is_file() or any(part in skip_parts for part in path.parts):
+                  continue
+              try:
+                  text = path.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              if any(pattern.search(text) for pattern in patterns):
+                  hits.append(str(path))
+          if hits:
+              raise SystemExit('Potential secret literals found:\n' + '\n'.join(hits))
+          PY

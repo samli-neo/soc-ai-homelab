@@ -64,6 +64,9 @@ Wazuh manager -> custom Shuffle integration -> SOC intake router
 - `services/` - small internal automation services used by Shuffle and health checks.
 - `scripts/` - deploy, test, regression, and phase automation scripts.
 - `docs/soc/` - integration notes, playbooks, report templates, and operational documentation.
+- `docs/deployment.md` - deployment, secrets, networking, and validation guide.
+- `docs/public-release-checklist.md` - security checklist before publishing the private repo.
+- `.github/` - CI, Dependabot, issue templates, PR template, and CODEOWNERS.
 - `dashboards/` - dashboard specification artifacts.
 - `PROJECT_MEMORY.md` - detailed engineering changelog and recovery notes.
 
@@ -85,6 +88,10 @@ This project is a homelab reference, not a turnkey cloud deployment.
 4. Create the external Docker network `vlan50` or adjust the Compose networking for your environment.
 5. Start the stack with Docker Compose.
 6. Run validation scripts from PowerShell on the management workstation.
+
+Detailed deployment notes: [`docs/deployment.md`](docs/deployment.md)
+
+Before making the repository public, complete [`docs/public-release-checklist.md`](docs/public-release-checklist.md).
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File "scripts\test-soc.ps1" -SkipWazuhRegression

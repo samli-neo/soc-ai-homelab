@@ -3,6 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AI SOC automation homelab portfolio integrating Wazuh, Shuffle, TheHive, MISP, Cortex, CAPEv2, Ghidra, YARA, CAPA, and Velociraptor.">
+  <meta property="og:title" content="AI SOC Automation Homelab">
+  <meta property="og:description" content="End-to-end SOC automation portfolio with SIEM, SOAR, threat intelligence, malware analysis, DFIR, and human approval gates.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/portfolio.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23061017'/%3E%3Cpath d='M14 34h10l5-14 8 26 5-12h8' fill='none' stroke='%2344d9ff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <title>AI SOC Automation Homelab</title>
   <style>
@@ -69,6 +75,11 @@
           <span class="pill">DFIR</span>
           <span class="pill">Human-in-the-loop IR</span>
         </div>
+        <div class="stack">
+          <a class="pill" href="../README.md">README</a>
+          <a class="pill" href="diagrams/soc-architecture.drawio.svg">Architecture diagram</a>
+          <a class="pill" href="professionalization-skill-plan.md">Roadmap</a>
+        </div>
       </div>
       <aside class="card">
         <h2>Validated Capabilities</h2>
@@ -119,6 +130,15 @@
     <section class="card section">
       <h2>Professional Diagrams</h2>
       <p>Editable Draw.io architecture and SOC role organigram files are included under <code>docs/diagrams/</code>, with SVG previews embedded in the README for GitHub review.</p>
+    </section>
+
+    <section class="card section">
+      <h2>Next Development Focus</h2>
+      <ul>
+        <li>Make the Compose stack more portable with profiles and fewer absolute homelab paths.</li>
+        <li>Add CI-backed validation for every automation service and config file.</li>
+        <li>Publish a sanitized GitHub Pages case study after final security review.</li>
+      </ul>
     </section>
   </main>
 </body>
