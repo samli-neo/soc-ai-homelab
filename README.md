@@ -6,6 +6,22 @@ Private SOC engineering portfolio that connects detection engineering, SOAR orch
 
 This is not a toy dashboard or a single-vendor demo. It is a working homelab built to show how a SOC pipeline can ingest real telemetry, normalize alerts, enrich evidence, create cases, run safe automation, and keep high-risk response actions under human control.
 
+## Why This Project Matters
+
+Modern SOC teams do not fail because they lack alerts. They fail because alerts are noisy, tools are disconnected, evidence is incomplete, and automation can become dangerous when it skips analyst judgment.
+
+This project addresses that problem as an engineering system:
+
+- Wazuh provides detection, normalization, correlation, and endpoint visibility.
+- Shuffle coordinates enrichment and response workflows.
+- TheHive turns high-signal alerts into structured cases with task ownership.
+- MISP and Cortex enrich observables before an analyst decision.
+- CAPEv2, CAPA, YARA, and Ghidra support malware-analysis workflows.
+- Velociraptor provides controlled DFIR collection.
+- AI-assisted recommendations are allowed, but containment stays approval-gated.
+
+The result is a realistic SOC automation pipeline that balances speed, evidence quality, and safety.
+
 ## Executive Summary
 
 | Area | What this project demonstrates |
@@ -71,6 +87,56 @@ Reporting and SOC operations dashboard
 - Dedicated agent identities are preferred over shared admin credentials.
 - Secrets and live credentials stay outside Git.
 - The repository must remain reproducible enough for CI while preserving homelab-specific deployment details in documentation.
+
+## AI-Assisted Workflow
+
+The workflow is AI-assisted, not blindly autonomous.
+
+| AI-assisted area | How it is controlled |
+| --- | --- |
+| Incident-response advice | `soc-ir-ai-advisor` generates recommendations, but high-risk actions are forced into approval flow. |
+| Analyst role modeling | Dedicated SOC roles are represented as agent identities for traceability and least-privilege design. |
+| Malware triage support | Static and dynamic analysis outputs are structured for analyst/AI correlation instead of raw tool dumps. |
+| Reporting | CISO and operational reporting paths consume validated workflow evidence instead of untrusted free-form output. |
+| Failure handling | If model calls fail, deterministic safe advice is returned; the workflow does not treat AI failure as benign evidence. |
+
+The AI layer can recommend and summarize. It cannot independently isolate hosts, modify firewall rules, disable accounts, trigger Wazuh active response, or detonate fresh malware samples.
+
+## Demo Scenarios
+
+These scenarios are represented by the repository structure, scripts, and SOC documentation:
+
+| Scenario | Demonstrated workflow |
+| --- | --- |
+| pfSense firewall escalation | pfSense filterlog is normalized by Wazuh, repeated suspicious blocks are escalated, and high-risk response remains approval-gated. |
+| Snort IDS alert triage | Snort CSV fields are decoded, priority is mapped into SOC risk, and cases can be created with detection-engineer task ownership. |
+| MISP IOC hit | IP/domain/hash indicators are matched through Wazuh lists and MISP rules, then routed as high or critical SOC risk. |
+| Malware hash analysis | Hash-bearing alerts flow through CAPEv2 lookup, CAPA/YARA static triage, optional Ghidra escalation, and case evidence storage. |
+| Endpoint DFIR collection | Mapped endpoints can trigger read-only Velociraptor collection while endpoint isolation remains blocked pending approval. |
+| Safe workflow regression | A synthetic alert is submitted through the real intake path and the test verifies semantic node results, not only workflow completion. |
+
+## Operational Proof Points
+
+- CI validates Docker Compose syntax, Python service compilation, Wazuh XML fragments, Draw.io files, and high-risk secret patterns.
+- Wazuh deployment scripts validate configuration before manager restart and support regression checks.
+- Shuffle E2E testing submits a safe alert through the production intake path and checks inner node results for semantic failures.
+- TheHive deduplication prevents case floods while preserving duplicate-count context.
+- Malware-analysis runners explicitly report degraded or inconclusive states when CAPE or sandbox evidence is unavailable.
+- The action executor is intentionally `audit_only` until real adapters, rollback procedures, and execution approvals are implemented.
+
+## Technology Stack
+
+| Layer | Tools |
+| --- | --- |
+| SIEM/XDR | Wazuh manager, Wazuh indexer, Wazuh dashboard, custom rules, custom decoders. |
+| SOAR | Shuffle, custom intake router, workflow watchdog, semantic E2E validation. |
+| Case management | TheHive, case deduplication, task assignment, quality gates, report templates. |
+| Threat intelligence | MISP IOC lists, MISP enrichment runner, Cortex analyzer runner. |
+| Malware analysis | CAPEv2, CAPA, YARA, Ghidra, sandbox VM readiness checks. |
+| DFIR | Velociraptor read-only collection runner. |
+| Approval and response | Human approval gateway, Telegram approval channel, audit-only action executor. |
+| Infrastructure | Docker Compose, Proxmox, pfSense, Snort, Windows sandbox VM, Linux services. |
+| Engineering quality | GitHub Actions CI, Dependabot, CODEOWNERS, issue templates, PR template, deployment docs. |
 
 ## Capability Map
 
