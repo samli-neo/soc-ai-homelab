@@ -1,131 +1,203 @@
 # AI SOC Automation Homelab
 
-An end-to-end security operations homelab that connects SIEM, SOAR, case management, threat intelligence, malware analysis, DFIR collection, and human approval gates into one automated workflow.
+[![CI](https://github.com/samli-neo/soc-ai-homelab/actions/workflows/ci.yml/badge.svg)](https://github.com/samli-neo/soc-ai-homelab/actions/workflows/ci.yml)
 
-This is a personal portfolio project built to demonstrate practical SOC engineering, detection engineering, automation, incident-response guardrails, and infrastructure troubleshooting.
+Private SOC engineering portfolio that connects detection engineering, SOAR orchestration, threat intelligence, malware analysis, DFIR collection, case management, approval gates, and operational health checks into one controlled security-operations workflow.
 
-## What It Shows
+This is not a toy dashboard or a single-vendor demo. It is a working homelab built to show how a SOC pipeline can ingest real telemetry, normalize alerts, enrich evidence, create cases, run safe automation, and keep high-risk response actions under human control.
 
-- Wazuh-based SIEM/XDR ingestion, custom decoders, custom rules, FIM, SCA, Syscollector, Windows Defender telemetry, and MISP IOC correlation.
-- Shuffle SOAR workflow orchestration with semantic E2E validation instead of only checking outer workflow success.
-- TheHive case deduplication, quality gates, task generation, and incident workflow structure.
-- MISP enrichment and unpublished SOC event creation for analyst review.
-- Cortex analyzer runner integration.
-- CAPEv2 and Ghidra/CAPA/YARA malware-analysis pipeline with explicit degraded-result handling.
-- Velociraptor read-only DFIR collection with destructive actions kept approval-gated.
-- Human-in-the-loop approval gateway and audit-only action executor for high-risk response actions.
-- Operational health checks, workflow watchdog, and SOC dashboard service.
+## Executive Summary
 
-## Architecture
+| Area | What this project demonstrates |
+| --- | --- |
+| Detection engineering | Custom Wazuh decoders, rules, correlation logic, MITRE ATT&CK tagging, FIM, SCA, Syscollector, Windows Defender telemetry, pfSense, and Snort ingestion. |
+| SOC automation | Shuffle workflow orchestration with semantic validation, digest routing, enrichment fan-out, case creation, DFIR collection, malware-analysis gates, and reporting. |
+| Threat intelligence | MISP IOC matching for IPs, domains, and hashes, plus optional unpublished MISP event creation for analyst review. |
+| Case management | TheHive deduplication, task ownership, quality gates, templates, dashboards, and controlled alert-to-case promotion. |
+| Malware analysis | CAPEv2 lookup/detonation guardrails, CAPA/YARA/static triage, optional Ghidra escalation, and degraded-result handling when sandbox evidence is incomplete. |
+| DFIR | Velociraptor read-only collection for mapped endpoints while isolation and destructive actions remain approval-gated. |
+| Secure automation | Human approval gateway, Telegram approval workflow, audit-only action executor, per-agent identity model, and explicit kill switches. |
+| Platform engineering | Docker Compose SOC stack, Proxmox-backed lab, CI validation, health checks, workflow watchdog, and operator dashboard services. |
 
-Professional SOC architecture preview:
+## Architecture Preview
 
 ![AI SOC Automation Homelab portfolio preview](docs/assets/portfolio.png)
 
-Professional Draw.io diagrams:
+Editable diagrams are available for review and reuse:
 
-- [Editable architecture diagram](docs/diagrams/soc-architecture.drawio)
+- [Architecture diagram](docs/diagrams/soc-architecture.drawio)
 - [Architecture SVG preview](docs/diagrams/soc-architecture.drawio.svg)
-- [Editable SOC role organigram](docs/diagrams/soc-workflow-organigram.drawio)
+- [SOC role organigram](docs/diagrams/soc-workflow-organigram.drawio)
 - [SOC role organigram SVG preview](docs/diagrams/soc-workflow-organigram.drawio.svg)
 
-![SOC architecture diagram](docs/diagrams/soc-architecture.drawio.svg)
-
-![SOC role organigram](docs/diagrams/soc-workflow-organigram.drawio.svg)
+## SOC Workflow
 
 ```text
-Wazuh agents / syslog / pfSense / Snort
+Telemetry sources
+  Wazuh agents, Windows endpoint, pfSense syslog, Snort IDS, MISP IOC lists
         |
         v
-Wazuh manager -> custom Shuffle integration -> SOC intake router
-        |                                      |
-        |                                      v
-        |                              Shuffle workflow
-        |                                      |
-        +--> custom rules / MISP CDB lists      +--> MISP runner
-                                               +--> Cortex runner
-                                               +--> TheHive deduper
-                                               +--> Velociraptor runner
-                                               +--> CAPE + static malware pipeline
-                                               +--> IR advisor
-                                               +--> approval gateway
-                                               +--> audit-only action executor
-                                               +--> reporting / dashboard
+Wazuh SIEM/XDR
+  Custom decoders, custom rules, ATT&CK mapping, severity policy, correlation
+        |
+        v
+SOC intake router
+  Level < 9: digest path
+  Level >= 9: full SOAR workflow
+        |
+        v
+Shuffle SOAR workflow
+  MISP enrichment -> Cortex analysis -> TheHive dedup/case/task creation
+        |              |                 |
+        |              |                 v
+        |              |          Case quality gates
+        |              v
+        |       Analyzer evidence
+        v
+Velociraptor read-only DFIR
+CAPEv2 + CAPA + YARA + optional Ghidra malware pipeline
+IR AI advisor with approval constraints
+Human approval gateway
+Audit-only action executor
+Reporting and SOC operations dashboard
 ```
+
+## Core Design Principles
+
+- Alerts should be normalized and scored before automation runs.
+- Low-risk enrichment can run automatically; high-risk containment needs explicit human approval.
+- Workflow success is not enough; node outputs are parsed for semantic failures.
+- Malware analysis can be degraded or inconclusive, and the pipeline must say so clearly.
+- Dedicated agent identities are preferred over shared admin credentials.
+- Secrets and live credentials stay outside Git.
+- The repository must remain reproducible enough for CI while preserving homelab-specific deployment details in documentation.
+
+## Capability Map
+
+| Capability | Implementation |
+| --- | --- |
+| SIEM/XDR | Wazuh manager, indexer, dashboard, centralized agent configuration, custom decoders, custom rules, MISP CDB lists. |
+| Network security telemetry | pfSense filterlog and Snort CSV normalization with escalation rules for repeated or high-priority events. |
+| Endpoint telemetry | Linux and Windows Wazuh agents with Syscollector, SCA, FIM, Windows Defender event channel, and hotfix inventory. |
+| SOAR orchestration | Shuffle production workflow triggered by Wazuh through `custom-shuffle` and `soc-intake-router`. |
+| Case management | `soc-thehive-deduper` creates or updates TheHive cases, assigns tasks, and prevents case floods. |
+| Threat intel | `soc-misp-runner` enriches observables, handles IOC matches, and can create unpublished review events. |
+| Analyzer execution | `soc-cortex-runner` runs or proposes Cortex analyzer jobs according to execution mode. |
+| Malware pipeline | `soc-malware-pipeline-runner` coordinates CAPEv2, CAPA, YARA, static triage, artifact storage, and optional Ghidra escalation. |
+| DFIR collection | `soc-velociraptor-runner` performs read-only collection from approved client mappings. |
+| AI-assisted IR | `soc-ir-ai-advisor` produces constrained recommendations while forcing high-risk actions into approval flow. |
+| Human approval | `soc-approval-gateway` records signed approval requests and can notify operators through Telegram. |
+| Response execution | `soc-action-executor` records approved actions in `audit_only` mode until real adapters and rollback paths are implemented. |
+| Operations | `soc-workflow-watchdog`, `soc-ops-dashboard`, and health scripts detect broken services, stuck workflows, and semantic failures. |
 
 ## Repository Map
 
-- `docker-compose.yml` - main lab service topology.
-- `configs/wazuh-manager/` - Wazuh manager config, custom decoders/rules, MISP CDB lists, centralized `agent.conf`.
-- `services/` - small internal automation services used by Shuffle and health checks.
-- `scripts/` - deploy, test, regression, and phase automation scripts.
-- `docs/soc/` - integration notes, playbooks, report templates, and operational documentation.
-- `docs/deployment.md` - deployment, secrets, networking, and validation guide.
-- `docs/public-release-checklist.md` - security checklist before publishing the private repo.
-- `.github/` - CI, Dependabot, issue templates, PR template, and CODEOWNERS.
-- `dashboards/` - dashboard specification artifacts.
-- `PROJECT_MEMORY.md` - detailed engineering changelog and recovery notes.
+| Path | Purpose |
+| --- | --- |
+| `docker-compose.yml` | Main SOC service topology for the homelab reference stack. |
+| `configs/wazuh-manager/` | Wazuh manager config, custom decoders/rules, MISP IOC lists, and centralized `agent.conf`. |
+| `services/` | Internal Python/Node automation services used by Shuffle, Wazuh integrations, runners, approval flow, and dashboards. |
+| `scripts/` | Deployment, regression, workflow E2E, malware VM operations, and SOC phase automation scripts. |
+| `docs/soc/` | Integration notes, analyst playbooks, report templates, TheHive notes, and SOC operating documentation. |
+| `docs/diagrams/` | Editable Draw.io architecture and role diagrams. |
+| `dashboards/` | Dashboard specification artifacts. |
+| `.github/` | CI, Dependabot, issue templates, PR template, and CODEOWNERS. |
+| `docs/deployment.md` | Deployment, secrets, networking, and validation guide. |
+| `docs/public-release-checklist.md` | Required safety checklist before making the private repo public. |
 
-## Guardrails
+## Security Guardrails
 
-- High-risk actions are approval-gated by design.
-- The current `soc-action-executor` defaults to `audit_only` and records approved actions without executing firewall isolation or account changes.
-- Fresh malware detonation requires explicit sample input, CAPE availability, and sandbox readiness.
-- Wazuh remote commands are intentionally not enabled in centralized agent config.
-- Secrets are loaded from local `.env`/service env files and are ignored by Git.
+- High-risk response actions are approval-gated by design.
+- `soc-action-executor` defaults to `ACTION_EXECUTOR_MODE=audit_only` and records approved actions without changing firewalls, accounts, or endpoints.
+- pfSense blocks, Snort rule changes, Velociraptor isolation, Wazuh active response, account disablement, broad collection, and sample detonation require explicit approval.
+- Wazuh remote commands are intentionally not enabled in centralized agent configuration.
+- Fresh malware detonation requires an explicit sample input, CAPE availability, sandbox readiness, and operator control.
+- Secrets are loaded from local `.env` or service-specific env files that are ignored by Git.
+- CI includes a high-risk literal secret scan to catch common accidental leaks.
 
-## Running Locally
+## Validation
 
-This project is a homelab reference, not a turnkey cloud deployment.
+The repository includes checks for both portable review and live homelab validation.
 
-1. Copy `.env.example` to `.env`.
-2. Replace every `change-me` value with a unique secret.
-3. Review all absolute `/root/...` mounts in `docker-compose.yml` and adapt them to your lab host.
-4. Create the external Docker network `vlan50` or adjust the Compose networking for your environment.
-5. Start the stack with Docker Compose.
-6. Run validation scripts from PowerShell on the management workstation.
+Portable checks:
 
-Detailed deployment notes: [`docs/deployment.md`](docs/deployment.md)
+```bash
+docker compose --env-file .env.example config --quiet
+```
 
-Before making the repository public, complete [`docs/public-release-checklist.md`](docs/public-release-checklist.md).
+CI validates:
+
+- Docker Compose syntax using a CI-safe generated Compose file.
+- Python service compilation under `services/`.
+- Wazuh XML fragments and Draw.io files.
+- High-risk secret literal patterns.
+
+Live homelab validation from the management workstation:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File "scripts\test-soc.ps1" -SkipWazuhRegression
 powershell -ExecutionPolicy Bypass -File "scripts\test-wazuh-pfsense-snort.ps1"
+powershell -ExecutionPolicy Bypass -File "scripts\test-shuffle-workflow-e2e.ps1"
 ```
 
-## Validation Highlights
+Wazuh deployment with regression:
 
-- Wazuh `analysisd` config validation is run before config deployment restarts the manager.
-- `scripts/test-wazuh-pfsense-snort.ps1` validates pfSense/Snort decoder and escalation behavior.
-- `scripts/test-shuffle-workflow-e2e.ps1` submits a safe alert through the real intake path and checks semantic node results.
-- `scripts/test-soc.ps1` checks core container health, service endpoints, Wazuh config, and active agent state.
+```powershell
+powershell -ExecutionPolicy Bypass -File "scripts\deploy-wazuh-config.ps1" -Restart -RunRegression
+```
 
-## Development Roadmap
+## Analyst Operating Model
 
-- Detailed professionalization roadmap: [`docs/professionalization-skill-plan.md`](docs/professionalization-skill-plan.md)
+The workflow models a small SOC with explicit responsibilities:
 
-- Replace remaining absolute homelab paths with portable profiles.
-- Add CI that runs static syntax checks and unit tests for every Python service.
-- Add architecture diagrams under `docs/soc/`.
-- Add GitHub Actions secret scanning and container linting.
-- Package Wazuh config validation as a standalone reusable workflow.
-- Expand detection content with ATT&CK-mapped tests.
-- Add clean demo data and screenshots for public portfolio review.
+| Role | Responsibility |
+| --- | --- |
+| L1 triage | Validate alert context, run low-risk enrichment, and reduce noise. |
+| L2 case manager | Deduplicate alerts, create cases, assign tasks, and enforce quality gates. |
+| Threat intelligence analyst | Review MISP and Cortex enrichment and classify observable risk. |
+| Malware analyst | Correlate CAPEv2, CAPA, YARA, Ghidra, and artifact evidence. |
+| L3 DFIR analyst | Run approved read-only Velociraptor collection and prepare escalation evidence. |
+| IR responder | Propose containment actions and wait for approval before execution. |
+| CISO reporting | Produce operational and executive reporting from validated case evidence. |
+
+## Running Locally
+
+This project is a homelab reference architecture, not a turnkey cloud deployment.
+
+1. Copy `.env.example` to `.env`.
+2. Replace every `change-me` value with a unique secret.
+3. Review absolute `/root/...` mounts in `docker-compose.yml` and adapt them to your lab host.
+4. Create the external Docker network `vlan50` or adjust Compose networking for your environment.
+5. Start the stack with Docker Compose.
+6. Run validation scripts from the management workstation.
+
+Detailed setup notes are in [`docs/deployment.md`](docs/deployment.md).
+
+Before publishing this repository publicly, complete [`docs/public-release-checklist.md`](docs/public-release-checklist.md).
 
 ## Career Relevance
 
 This project demonstrates hands-on ability across:
 
-- SOC automation and SOAR engineering
-- Detection engineering with Wazuh rules and decoders
-- Threat intelligence integration with MISP
-- Case management and incident workflow design with TheHive
-- Malware-analysis orchestration with CAPEv2, CAPA, YARA, and Ghidra
-- DFIR automation with Velociraptor
-- Secure automation design with approval gates and audit-only execution
-- Debugging distributed systems across Docker, Proxmox, Windows sandbox VMs, and multiple security platforms
+- SOC platform engineering and homelab operations.
+- Detection engineering with Wazuh rules, decoders, CDB lists, and ATT&CK mapping.
+- SOAR workflow design with Shuffle and semantic E2E validation.
+- Case management with TheHive deduplication, task ownership, and quality gates.
+- Threat intelligence workflows with MISP and Cortex.
+- Malware-analysis orchestration with CAPEv2, CAPA, YARA, and Ghidra.
+- DFIR automation with Velociraptor under read-only guardrails.
+- Secure automation design with approval gates, audit-only execution, and least-privilege service identities.
+- Infrastructure troubleshooting across Docker, Proxmox, pfSense, Windows sandbox VMs, and multiple security platforms.
+
+## Roadmap
+
+- Complete public-release security review and redact private operational notes.
+- Replace remaining absolute homelab paths with more portable profiles.
+- Expand ATT&CK-mapped detection tests and synthetic alert fixtures.
+- Add richer dashboard examples with clean demo data.
+- Add container linting and broader static checks.
+- Package Wazuh validation as a reusable workflow.
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [`LICENSE`](LICENSE).
