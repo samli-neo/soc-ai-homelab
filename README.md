@@ -37,19 +37,19 @@ This is not a toy dashboard or a single-vendor demo. It is a working homelab bui
 
 ```mermaid
 flowchart LR
-    A[Telemetry] --> B[Wazuh SIEM/XDR]
-    B --> C[SOC Intake Router]
-    C --> D{Severity Policy}
-    D -->|Digest| E[Low/Medium Review]
-    D -->|High/Critical| F[Shuffle SOAR]
-    F --> G[MISP + Cortex]
-    F --> H[TheHive Cases]
-    F --> I[Velociraptor DFIR]
-    F --> J[CAPEv2 + YARA + CAPA + Ghidra]
-    F --> K[AI IR Advisor]
-    K --> L[Human Approval]
-    L --> M[Audit-Only Action Executor]
-    H --> N[Reports + Dashboard]
+    A["Telemetry"] --> B["Wazuh SIEM / XDR"]
+    B --> C["SOC Intake Router"]
+    C --> D{"Severity Policy"}
+    D -->|"Digest"| E["Low and Medium Review"]
+    D -->|"High and Critical"| F["Shuffle SOAR"]
+    F --> G["MISP and Cortex"]
+    F --> H["TheHive Cases"]
+    F --> I["Velociraptor DFIR"]
+    F --> J["CAPEv2, YARA, CAPA, Ghidra"]
+    F --> K["AI IR Advisor"]
+    K --> L["Human Approval"]
+    L --> M["Audit Only Action Executor"]
+    H --> N["Reports and Dashboard"]
 ```
 
 ## Why This Project Matters
