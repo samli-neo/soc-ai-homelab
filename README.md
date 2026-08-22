@@ -1,10 +1,56 @@
 # AI SOC Automation Homelab
 
 [![CI](https://github.com/samli-neo/soc-ai-homelab/actions/workflows/ci.yml/badge.svg)](https://github.com/samli-neo/soc-ai-homelab/actions/workflows/ci.yml)
+![SOC](https://img.shields.io/badge/SOC-Automation-0f172a?style=for-the-badge&logo=securityscorecard&logoColor=white)
+![Wazuh](https://img.shields.io/badge/Wazuh-SIEM%20%2F%20XDR-2563eb?style=for-the-badge&logo=wazuh&logoColor=white)
+![Shuffle](https://img.shields.io/badge/Shuffle-SOAR-7c3aed?style=for-the-badge)
+![TheHive](https://img.shields.io/badge/TheHive-Case%20Management-f59e0b?style=for-the-badge)
+![MISP](https://img.shields.io/badge/MISP-Threat%20Intel-dc2626?style=for-the-badge)
+![Velociraptor](https://img.shields.io/badge/Velociraptor-DFIR-16a34a?style=for-the-badge)
+![AI Assisted](https://img.shields.io/badge/AI--Assisted-Human%20Approved-111827?style=for-the-badge&logo=openai&logoColor=white)
+![Audit Only](https://img.shields.io/badge/Containment-Audit%20Only-64748b?style=for-the-badge)
 
 Private SOC engineering portfolio that connects detection engineering, SOAR orchestration, threat intelligence, malware analysis, DFIR collection, case management, approval gates, and operational health checks into one controlled security-operations workflow.
 
 This is not a toy dashboard or a single-vendor demo. It is a working homelab built to show how a SOC pipeline can ingest real telemetry, normalize alerts, enrich evidence, create cases, run safe automation, and keep high-risk response actions under human control.
+
+---
+
+## Quick Navigation
+
+| Start here | Engineering depth | Proof and safety |
+| --- | --- | --- |
+| [Why it matters](#why-this-project-matters) | [SOC workflow](#soc-workflow) | [Operational proof points](#operational-proof-points) |
+| [Executive summary](#executive-summary) | [Technology stack](#technology-stack) | [Security guardrails](#security-guardrails) |
+| [Architecture preview](#architecture-preview) | [Capability map](#capability-map) | [Validation](#validation) |
+
+## At a Glance
+
+| Signal | Value |
+| --- | --- |
+| Project type | Private SOC automation homelab and engineering portfolio. |
+| Security model | AI-assisted, human-approved, audit-only containment by default. |
+| Main pipeline | Wazuh -> intake router -> Shuffle -> MISP/Cortex/TheHive/Velociraptor/CAPEv2/Ghidra -> approval/reporting. |
+| Main differentiator | Combines deterministic SIEM/SOAR controls with AI-assisted IR recommendations and explicit safety gates. |
+| Validation style | CI checks plus live workflow regression that inspects semantic node results. |
+| Target audience | SOC engineers, detection engineers, DFIR analysts, security automation engineers, and technical recruiters. |
+
+```mermaid
+flowchart LR
+    A[Telemetry] --> B[Wazuh SIEM/XDR]
+    B --> C[SOC Intake Router]
+    C --> D{Severity Policy}
+    D -->|Digest| E[Low/Medium Review]
+    D -->|High/Critical| F[Shuffle SOAR]
+    F --> G[MISP + Cortex]
+    F --> H[TheHive Cases]
+    F --> I[Velociraptor DFIR]
+    F --> J[CAPEv2 + YARA + CAPA + Ghidra]
+    F --> K[AI IR Advisor]
+    K --> L[Human Approval]
+    L --> M[Audit-Only Action Executor]
+    H --> N[Reports + Dashboard]
+```
 
 ## Why This Project Matters
 
